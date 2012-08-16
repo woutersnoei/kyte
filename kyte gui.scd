@@ -5,13 +5,13 @@
 	
 	if( evt.window.notNil && { evt.window.isClosed.not }) { evt.window.close };
 	
-	evt.window = Window("kyte", Rect(548, 453, 500, 400)).front;
+	evt.window = Window("kyte", Rect(548, 453, 500, 600)).front;
 	evt.window.addFlowLayout;
 	evt.views =();
 	
 	RoundView.useWithSkin(( font: Font( Font.defaultSansFace, 9 ) ), {
-		[ \dust, \combs, \frogs, \metally ].do({ |name|
-			var evx, views, width, height, ctrl;
+		[ \dust, \combs, \frogs, \metally, \spread ].do({ |name|
+			var evx, views, width, height, ctrl, ctrl2;
 			evx = evt[ name ];
 			views = ();
 			width = ((evt.window.bounds.width/2) - 8);
@@ -21,10 +21,11 @@
 				width @ (((evx.settings.size + 1) * (height + 2)) + 4) 
 			).background_( Color.gray(0.9) );
 			
-			views[ \comp ].addFlowLayout( 2@2,  2@2 );
-			views[ \comp ].onClose_({ ctrl.remove });
-			
 			ctrl = SimpleController( evx.settings );
+			ctrl2 = SimpleController( evx );
+			
+			views[ \comp ].addFlowLayout( 2@2,  2@2 );
+			views[ \comp ].onClose_({ ctrl.remove; ctrl2.remove });
 			
 			width = width - 4;
 			
@@ -56,6 +57,9 @@
 				);
 				ctrl.put( key, { views[ key ].value = evx.settings[ key ]; });
 			});
+			
+			ctrl2.put( \started, { views[ \power ].value = 1 });
+			ctrl2.put( \ended, { views[ \power ].value = 0 });
 			
 			evt.views[ name ] = views;
 		});

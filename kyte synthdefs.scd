@@ -262,4 +262,58 @@ SynthDef( "kyte_metally", { |amp = 0.5, level = 0, lowcut = #[500,3000], hicut =
 	Out.ar(0, sig ); 
 }).load(s);
 
+SynthDef( "kyte_spread", { |from = #[400, 1000], modSpeed = 0.1, ringTime = 10, ampSpeed = 1, 
+		amp = 0.25, gate = 1, freqSpeed = 0.05, to = #[50,10000], dev = 0.005, bw = 0.001|
+	var sig, amps, n = 40, range = 10, offset = 0;
+	var ratios, freqs, sigx, siglim;
+	var env, noise;
+	
+	//sig = PlayBuf.ar( 1, ~kyte.buf_mid, 1, loop: 1);
+	//sig = BLowCut.ar( sig, 450, 5 );
+	//sig = BHiCut.ar( sig, 800, 5 );
+	sig = PrivateIn.ar(0);
+	
+	//freqs = n.collect({ |i| i.linlin(0,n-1,450,800) });
+	
+	freqs = n.collect({ LFDNoise3.kr(freqSpeed).range(0.125,1.875) }).integrate;
+	freqs = freqs - freqs[0];
+	freqs = freqs / freqs.last;
+	freqs = freqs.linexp(0,1, *from);
+	
+	noise = PinkNoise.ar(0.5.dup(4));
+	
+	to = to.lag(5);
+	modSpeed = modSpeed.lag(4);
+	
+	siglim = BLowCut.ar( sig, from[0], 3 );
+	siglim = BHiCut.ar( siglim, from[1], 3 );
+	
+	#sigx, amps = n.collect({ |i|
+		var sg, amp;
+		sg = Ringz.ar( siglim, freqs[i], [1,0.5] * ringTime, [0.1,-0.1]);		amp = Amplitude.kr( sg[1], (ringTime * ampSpeed) / 2, ringTime * ampSpeed );
+		sg = sg.sum + BBandPass.ar( noise.wrapAt(i), freqs[i], bw.lag(1) );
+		sg = FreqShift.ar(sg, freqs[i].expexp(from[0],from[1], to[0],to[1]+from[0]) - from[0] );
+		//sg = SinOsc.ar( i.linlin(0,n-1,50,3000), 2pi.rand, 0.1 );
+		[sg, amp];
+	}).flop;
+	
+	amps = amps.pow(2);
+	amps = amps / amps.sum.max(0.001);
+	
+	amps = amps * SinOsc.kr(
+		LFDNoise3.kr(0.01.dup(n)).exprange(0.05,5) * modSpeed
+	).range(0,1).pow(4);
+	
+	sigx = SplayAz.ar( 4, sigx * amps, center: LFSaw.kr( LFDNoise1.kr(0.1) * 0.1 ) );
+		
+	sig = Line.ar( -1,1,0.8).max(0) * Normalizer.ar(sigx, dur: 0.2) * 0.25 * amp;
+	
+	sig = PitchShift.ar( sig, 0.1, 1, dev, 0.01 );
+	
+	env = Env.asr(2,1,2).kr(2,gate);
+	
+	PrivateOut.ar(2,sig * env * 0.5);
+	Out.ar( 0, sig * env );	
+}).load(s);
+
 );

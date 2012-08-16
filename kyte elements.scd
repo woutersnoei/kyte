@@ -20,7 +20,16 @@
 
 ~kyte.dust.arm = { |evt|
 	evt.settings.removeDependant( evt[ \updateFunc ] );
-	evt[ \updateFunc ] = { evt.sn.set( *evt.settings.getPairs ); };
+	evt[ \updateFunc ] = { |obj, what|
+		if( what == \amp ) {
+			if( evt.settings.amp == 0 ) {
+				if( evt.sn.notNil ) { evt.end; };
+			} {
+				if( evt.sn.isNil ) { evt.start; };
+			}; 
+		};
+		evt.sn.set( *evt.settings.getPairs ); 
+	};
 	evt.settings.addDependant( evt[ \updateFunc ] );
 };
 
@@ -28,11 +37,13 @@
 	evt.arm;
 	evt.end;
 	evt.sn = Synth( evt.defName, evt.settings.getPairs );
+	evt.changed( \started );
 };
 
 ~kyte.dust.end = { |evt|
 	evt.sn !? _.release(2);
 	evt.sn = nil;
+	evt.changed( \ended );
 };
 
 
@@ -48,6 +59,8 @@
 
 ~kyte.frogs.specs.nn = [1,15,\lin,1,1].asSpec;
 
+~kyte.frogs.arm;
+
 
 // combs
 ~kyte.combs = ~kyte.dust.deepCopy;
@@ -56,7 +69,7 @@
 
 ~kyte.combs.settings.amp = 0.25;
 ~kyte.combs.settings.range = 24;
-~kyte.combs.settings.offset = 0;
+~kyte.combs.settings.offset = -12;
 
 ~kyte.combs.settings.speed = 0.5; 
 ~kyte.combs.settings.ringTime = 5;
@@ -68,7 +81,35 @@
 ~kyte.combs.specs.shiftSpeed = [0.001,1,\exp].asSpec;
 ~kyte.combs.specs.nn = [1,12,\lin,1,1].asSpec;
 
+~kyte.combs.arm;
 
+
+// spread
+
+~kyte.spread = ~kyte.dust.deepCopy;
+
+~kyte.spread.defName = "kyte_spread";
+
+~kyte.spread.settings = OEM();
+~kyte.spread.specs = ~kyte.spread.specs ? EM();
+
+[
+	\amp, [ 0.25, \amp.asSpec ],
+	\from, [ [400,1000],  \freq ], 
+	\to, [ [50,10000],  \freq ],
+	\ringTime, [ 10, [ 0.01, 50, \exp].asSpec ],
+	\modSpeed, [ 0.1, [0.01,50, \exp].asSpec ],
+	\freqSpeed, [ 0.05, [ 0.01, 0.1, \exp ].asSpec ],
+	\dev, [ 0.005, [ 0, 0.1, -4 ].asSpec ],
+	\bw, [ 0.001, [ 0.0001, 10, \exp ].asSpec ],
+	
+].pairsDo({ |key, value|
+	~kyte.spread.settings[ key ] = value[0];
+	~kyte.spread.specs[ key ] = value[1].asSpec;
+});
+
+
+~kyte.spread.arm;
 
 // dust
 ~kyte.dust.defName = "kyte_dust10";
@@ -82,6 +123,8 @@
 
 ~kyte.dust.specs.dens= [0,100,\lin,1].asSpec; 
 ~kyte.dust.specs.ringTime = [0.1,10,\exp].asSpec;
+
+~kyte.dust.arm;
 
 
 // lowblow

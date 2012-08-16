@@ -25,7 +25,7 @@
 
 ~kyte.getState = { |evt, name = \default|
 	evt.states[ name ] = ();
-	[ \dust, \combs, \frogs, \metally ].do({ |item|
+	[ \dust, \combs, \frogs, \metally, \spread ].do({ |item|
 		evt.states[ name ][ item ] = evt.getPreset( item );
 	});
 };
@@ -68,14 +68,16 @@ y = ~kyte.getPreset( \combs );
 
 ~kyte.getState( \default );
 
+~kyte.getState( \next );
+
 
 ~kyte.states.cs
 
 ~kyte.getState( \next );
 
-~kyte.applyState( \next, 1 );
+~kyte.applyState( \next, 10 );
 
-~kyte.applyState( \default, 1);
+~kyte.applyState( \default, 10);
 
 (
 {

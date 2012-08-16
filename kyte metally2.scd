@@ -42,6 +42,7 @@
 	index.asCollection.do({ |id|
 		evt.synths[ id ] = Synth( "kyte_metally",  evt.settings.getPairs );
 	});
+	evt.changed( \started );
 };
 
 ~kyte.metally.end = { |evt, index|
@@ -54,6 +55,7 @@
 			evt.synths[id] = nil;
 		});
 	};
+	evt.changed( \ended );
 };
 
 ~kyte.metally.settings = OEM();
@@ -75,9 +77,20 @@
 
 ~kyte.metally.arm = { |evt|
 	evt.settings.removeDependant( evt[ \updateFunc ] );
-	evt[ \updateFunc ] = { evt.synths.do(_.set( *evt.settings.getPairs )); };
+	evt[ \updateFunc ] = { |obj, what|
+		if( what == \amp ) {
+			if( evt.settings.amp == 0 ) {
+				if( evt.synths.size > 0 ) { evt.end; };
+			} {
+				if( evt.synths.size == 0 ) { evt.start; };
+			}; 
+		};
+		evt.sn.set( *evt.settings.getPairs ); 
+	};
 	evt.settings.addDependant( evt[ \updateFunc ] );
 };
+
+~kyte.metally.arm;
 
 )
 
